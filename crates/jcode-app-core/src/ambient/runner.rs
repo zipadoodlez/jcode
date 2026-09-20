@@ -15,7 +15,6 @@ use crate::ambient_scheduler::{AdaptiveScheduler, AmbientSchedulerConfig};
 use crate::config::config;
 use crate::logging;
 use crate::memory::MemoryManager;
-use crate::notifications::NotificationDispatcher;
 use crate::provider::Provider;
 use crate::safety::SafetySystem;
 use crate::session::Session;
@@ -53,8 +52,6 @@ struct AmbientRunnerInner {
     running: RwLock<bool>,
     /// Safety system shared with ambient tools
     safety: Arc<SafetySystem>,
-    /// Notification dispatcher for push/email/desktop alerts
-    notifier: NotificationDispatcher,
     /// Number of active user sessions (for pause logic)
     active_user_sessions: RwLock<usize>,
     /// Soft interrupt queue for the currently-running ambient agent (if any).
@@ -73,7 +70,6 @@ impl AmbientRunnerHandle {
                 wake_notify: Notify::new(),
                 running: RwLock::new(false),
                 safety,
-                notifier: NotificationDispatcher::new(),
                 active_user_sessions: RwLock::new(0),
                 active_cycle_queue: RwLock::new(None),
             }),
@@ -557,20 +553,6 @@ impl AmbientRunnerHandle {
         // Spawn reply pollers only when ambient mode is enabled at startup; scheduled
         // session-targeted scheduled tasks should still work without the ambient-only reply
         // infrastructure.
-        if config().ambient.enabled {
-            let safety_config = config().safety.clone();
-            if safety_config.email_reply_enabled
-                && safety_config.email_imap_host.is_some()
-                && safety_config.email_enabled
-            {
-                let imap_config = safety_config.clone();
-                tokio::spawn(async move {
-                    crate::notifications::imap_reply_loop(imap_config).await;
-                });
-                logging::info("Ambient runner: IMAP reply poller spawned");
-            }
-        }
-
         let amb_config = &config().ambient;
         let scheduler_config = AmbientSchedulerConfig {
             min_interval_minutes: amb_config.min_interval_minutes,
@@ -767,9 +749,6 @@ impl AmbientRunnerHandle {
                         conversation: result.conversation.clone(),
                     };
                     let _ = self.inner.safety.save_transcript(&transcript);
-
-                    // Send notifications (fire-and-forget)
-                    self.inner.notifier.dispatch_cycle_summary(&transcript);
 
                     // Post-cycle memory consolidation (fire-and-forget)
                     tokio::spawn(async move {
