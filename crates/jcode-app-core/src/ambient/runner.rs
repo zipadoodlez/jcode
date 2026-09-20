@@ -100,7 +100,7 @@ impl AmbientRunnerHandle {
         &self.inner.safety
     }
 
-    /// Inject a message from an external channel (Telegram, Discord, etc.)
+    /// Inject a message from an external integration (a user-written bridge, the IMAP
     /// into the active ambient cycle as a user message.
     /// If a cycle is running, the message goes in via soft interrupt (immediate).
     /// If no cycle is running, the message is saved as a directive and a cycle is triggered.
@@ -569,11 +569,6 @@ impl AmbientRunnerHandle {
                 });
                 logging::info("Ambient runner: IMAP reply poller spawned");
             }
-
-            // Spawn reply pollers for all configured message channels
-            // (Telegram, Discord, etc.)
-            let channel_registry = crate::channel::ChannelRegistry::from_config(&safety_config);
-            channel_registry.spawn_reply_loops(&self);
         }
 
         let amb_config = &config().ambient;

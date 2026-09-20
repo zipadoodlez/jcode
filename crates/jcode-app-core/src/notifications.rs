@@ -90,7 +90,6 @@ impl Priority {
 pub struct NotificationDispatcher {
     client: reqwest::Client,
     config: SafetyConfig,
-    channels: crate::channel::ChannelRegistry,
 }
 
 impl Default for NotificationDispatcher {
@@ -104,7 +103,6 @@ impl NotificationDispatcher {
         let cfg = config().safety.clone();
         Self {
             client: crate::provider::shared_http_client(),
-            channels: crate::channel::ChannelRegistry::from_config(&cfg),
             config: cfg,
         }
     }
@@ -113,7 +111,6 @@ impl NotificationDispatcher {
     pub fn from_config(config: SafetyConfig) -> Self {
         Self {
             client: crate::provider::shared_http_client(),
-            channels: crate::channel::ChannelRegistry::from_config(&config),
             config,
         }
     }
@@ -274,10 +271,6 @@ impl NotificationDispatcher {
                 }
             });
         }
-
-        // Message channels (Telegram, Discord, etc.) — uses DETAILED body
-        let channel_text = format!("*{}*\n\n{}", title, detailed_body);
-        self.channels.send_all(&channel_text);
     }
 }
 
