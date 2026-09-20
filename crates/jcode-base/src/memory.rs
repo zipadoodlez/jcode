@@ -226,11 +226,6 @@ impl MemoryManager {
         self.test_mode
     }
 
-    /// Set test mode (for debug sessions)
-    pub fn set_test_mode(&mut self, test_mode: bool) {
-        self.test_mode = test_mode;
-    }
-
     /// Clear all test memories (only works in test mode)
     pub fn clear_test_storage(&self) -> Result<()> {
         if !self.test_mode {

@@ -27,7 +27,6 @@ pub use storage_helpers::{
 };
 
 use anyhow::Result;
-use chrono::Utc;
 use jcode_storage as storage;
 use serde::{Deserialize, Serialize};
 #[cfg(unix)]
@@ -99,58 +98,8 @@ impl BuildManifest {
         }
     }
 
-    /// Start canary testing for a session
-    pub fn start_canary(&mut self, hash: &str, session_id: &str) -> Result<()> {
-        self.canary = Some(hash.to_string());
-        self.canary_session = Some(session_id.to_string());
-        self.canary_status = Some(CanaryStatus::Testing);
-        self.save()
-    }
-
-    /// Mark canary as passed
-    pub fn mark_canary_passed(&mut self) -> Result<()> {
-        self.canary_status = Some(CanaryStatus::Passed);
-        self.save()
-    }
-
-    /// Mark canary as failed
-    pub fn mark_canary_failed(&mut self) -> Result<()> {
-        self.canary_status = Some(CanaryStatus::Failed);
-        self.save()
-    }
-
-    /// Record a crash
-    pub fn record_crash(
-        &mut self,
-        hash: &str,
-        exit_code: i32,
-        stderr: &str,
-        diff: Option<String>,
-    ) -> Result<()> {
-        self.last_crash = Some(CrashInfo {
-            build_hash: hash.to_string(),
-            exit_code,
-            stderr: stderr.chars().take(4096).collect(), // Truncate
-            crashed_at: Utc::now(),
-            diff,
-        });
-        self.canary_status = Some(CanaryStatus::Failed);
-        self.save()
-    }
-
-    /// Clear crash info after it's been handled
-    pub fn clear_crash(&mut self) -> Result<()> {
-        self.last_crash = None;
-        self.save()
-    }
-
     pub fn set_pending_activation(&mut self, activation: PendingActivation) -> Result<()> {
         self.pending_activation = Some(activation);
-        self.save()
-    }
-
-    pub fn clear_pending_activation(&mut self) -> Result<()> {
-        self.pending_activation = None;
         self.save()
     }
 
