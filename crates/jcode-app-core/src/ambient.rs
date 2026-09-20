@@ -10,6 +10,7 @@ mod persistence;
 mod prompt;
 pub mod runner;
 pub mod scheduler;
+mod types;
 
 pub use directives::{
     UserDirective, add_directive, has_pending_directives, load_directives, take_pending_directives,

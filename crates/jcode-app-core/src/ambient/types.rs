@@ -1,3 +1,8 @@
+//! Ambient usage and rate-limit types.
+//!
+//! These were a one-file crate (`jcode-ambient-types`) with a single consumer;
+//! folded here so the record shape lives next to the scheduler that reads it.
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
