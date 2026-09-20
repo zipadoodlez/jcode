@@ -519,7 +519,7 @@ fn side_panel_state_shared_types_roundtrip() {
     };
     let mut pdf_snapshot = snapshot.clone();
     pdf_snapshot.focus_revision = 123;
-    pdf_snapshot.pages[0].format = jcode_side_panel_types::SidePanelPageFormat::Pdf;
+    pdf_snapshot.pages[0].format = jcode_protocol::SidePanelPageFormat::Pdf;
     pdf_snapshot.pages[0].pdf_data = Some("JVBERi0xLjQKJSVFT0Y=".into());
     pdf_snapshot.pages[0].content = "PDF document fallback".into();
     for snapshot in [snapshot, pdf_snapshot, SidePanelSnapshot::default()] {

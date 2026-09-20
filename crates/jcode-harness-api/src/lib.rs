@@ -28,7 +28,7 @@ mod swarm_metadata;
 
 pub use client::{FrameError, HarnessClient, read_frame, write_frame};
 pub use events::*;
-pub use jcode_side_panel_types::{
+pub use jcode_protocol::{
     SidePanelPage, SidePanelPageFormat, SidePanelPageSource, SidePanelSnapshot,
 };
 pub use jcode_usage_types::{ModelUsage, compare_model_usage};

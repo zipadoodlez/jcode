@@ -2,7 +2,7 @@
 
 use super::osa;
 use anyhow::Result;
-use jcode_tool_types::ToolOutput;
+use jcode_tool_core::ToolOutput;
 
 pub fn list_apps() -> Result<ToolOutput> {
     let script = "tell application \"System Events\" to get name of every application process whose background only is false";

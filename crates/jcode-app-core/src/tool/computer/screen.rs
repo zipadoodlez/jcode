@@ -4,7 +4,7 @@ use super::osa;
 use anyhow::{Context, Result, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use core_graphics::display::CGDisplay;
-use jcode_tool_types::ToolOutput;
+use jcode_tool_core::ToolOutput;
 use serde_json::json;
 use std::process::Command;
 use std::time::Duration;

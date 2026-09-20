@@ -3,7 +3,7 @@
 
 use super::osa;
 use anyhow::Result;
-use jcode_tool_types::ToolOutput;
+use jcode_tool_core::ToolOutput;
 use serde_json::json;
 use std::process::Command;
 use std::thread::sleep;

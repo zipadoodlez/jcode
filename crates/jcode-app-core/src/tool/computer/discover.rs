@@ -2,7 +2,7 @@
 //! so the always-on tool schema stays small.
 
 use anyhow::Result;
-use jcode_tool_types::ToolOutput;
+use jcode_tool_core::ToolOutput;
 
 const MOUSE: &str = "\
 mouse actions (visible coordinate input; moves the real cursor):
