@@ -26,14 +26,7 @@ fn directives_path() -> Result<PathBuf> {
 
 pub fn load_directives() -> Vec<UserDirective> {
     directives_path()
-        .ok()
-        .and_then(|p| {
-            if p.exists() {
-                storage::read_json(&p).ok()
-            } else {
-                None
-            }
-        })
+        .map(|p| storage::read_json_or_default_ok(&p))
         .unwrap_or_default()
 }
 

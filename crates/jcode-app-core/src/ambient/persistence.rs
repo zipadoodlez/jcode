@@ -61,11 +61,7 @@ pub struct ScheduledQueue {
 
 impl ScheduledQueue {
     pub fn load(path: PathBuf) -> Self {
-        let items: Vec<ScheduledItem> = if path.exists() {
-            storage::read_json(&path).unwrap_or_default()
-        } else {
-            Vec::new()
-        };
+        let items: Vec<ScheduledItem> = storage::read_json_or_default_ok(&path);
         Self { items, path }
     }
 

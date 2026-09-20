@@ -33,11 +33,7 @@ impl UsageLog {
     /// Load (or create) the usage log from the default path.
     pub fn load() -> Self {
         let path = Self::default_path();
-        let records: Vec<UsageRecord> = if path.exists() {
-            storage::read_json(&path).unwrap_or_default()
-        } else {
-            Vec::new()
-        };
+        let records: Vec<UsageRecord> = storage::read_json_or_default_ok(&path);
         UsageLog {
             records,
             path,

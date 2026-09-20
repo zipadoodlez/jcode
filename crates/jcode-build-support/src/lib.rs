@@ -68,11 +68,7 @@ impl BuildManifest {
     /// Load manifest from disk
     pub fn load() -> Result<Self> {
         let path = manifest_path()?;
-        if path.exists() {
-            storage::read_json(&path)
-        } else {
-            Ok(Self::default())
-        }
+        storage::read_json_or_default(&path)
     }
 
     /// Save manifest to disk
