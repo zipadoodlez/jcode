@@ -403,37 +403,9 @@ pub struct HistoryMessage {
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-pub enum RenderedImageSource {
-    UserInput,
-    ToolResult { tool_name: String },
-    Other { role: String },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-pub enum RenderedImageAnchor {
-    ToolCall { id: String },
-    UserPrompt { ordinal: usize },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RenderedImage {
-    pub media_type: String,
-    pub data: String,
-    pub label: Option<String>,
-    pub source: RenderedImageSource,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub anchor: Option<RenderedImageAnchor>,
-    /// Insert before this zero-based entry in the accompanying History.messages
-    /// array (including hidden/system/tool rows). Its length means append.
-    /// Set for restored tool images, whose tool-call row may not be exposed by
-    /// a client. Absent on live events and older servers. Preserve vector order
-    /// for multiple images at the same boundary.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub history_message_index: Option<usize>,
-}
+// Wire image shape lives once, in `jcode-session-types`; this crate only
+// re-exports it so the client API keeps the same path.
+pub use jcode_session_types::{RenderedImage, RenderedImageAnchor, RenderedImageSource};
 
 #[cfg(test)]
 mod image_history_tests {

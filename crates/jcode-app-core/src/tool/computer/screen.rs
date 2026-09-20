@@ -277,11 +277,3 @@ fn which_swift() -> Option<String> {
     }
     None
 }
-
-/// Used by `osa`-based callers that just need a quick AX-free description.
-#[allow(dead_code)]
-pub fn frontmost_app() -> Result<String> {
-    osa::run_applescript(
-        "tell application \"System Events\" to get name of first application process whose frontmost is true",
-    )
-}

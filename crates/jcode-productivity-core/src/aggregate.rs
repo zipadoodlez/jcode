@@ -3,7 +3,7 @@
 
 use crate::model::{ProductivityReport, SessionSummary, Tally};
 use crate::scan::ScanResult;
-use chrono::{Datelike, Local, NaiveDate};
+use chrono::{Local, NaiveDate};
 use std::collections::{BTreeSet, HashMap};
 
 fn top_n(map: HashMap<String, u64>, n: usize) -> Vec<Tally> {
@@ -307,19 +307,6 @@ fn badges(r: &ProductivityReport) -> Vec<String> {
     b
 }
 
-#[allow(dead_code)]
-fn weekday_label(idx: usize) -> &'static str {
-    match idx {
-        0 => "Mon",
-        1 => "Tue",
-        2 => "Wed",
-        3 => "Thu",
-        4 => "Fri",
-        5 => "Sat",
-        _ => "Sun",
-    }
-}
-
 /// Convenience for callers that just want today's full report.
 pub fn report_from_summaries(summaries: Vec<SessionSummary>) -> ProductivityReport {
     build_report(ScanResult {
@@ -329,10 +316,4 @@ pub fn report_from_summaries(summaries: Vec<SessionSummary>) -> ProductivityRepo
         scan_secs: 0.0,
         summaries,
     })
-}
-
-/// Local weekday index (Mon=0) for today, used by some renderers.
-#[allow(dead_code)]
-pub(crate) fn today_weekday() -> usize {
-    Local::now().weekday().num_days_from_monday() as usize
 }
