@@ -67,7 +67,7 @@ Required review action if violated:
 
 Sources:
 - `crates/jcode-tui/src/tui/mermaid.rs`
-- `src/tui/mermaid_cache_render.rs`
+- `crates/jcode-tui-mermaid/src/mermaid_cache_render.rs`
 
 | Metric | Budget | Why |
 |---|---:|---|
