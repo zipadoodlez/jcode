@@ -314,7 +314,7 @@ async fn render_svg_pipeline(
     for (frame_num, &unique_idx) in frame_indices.iter().enumerate() {
         let src = png_dir.join(format!("unique_{:06}.png", unique_idx));
         let dst = seq_dir.join(format!("frame_{:06}.png", frame_num));
-        crate::platform::symlink_or_copy(&src, &dst)?;
+        crate::platform::symlink(&src, &dst)?;
     }
 
     eprintln!("  Encoding video with ffmpeg...");

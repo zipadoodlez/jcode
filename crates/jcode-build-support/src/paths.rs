@@ -339,7 +339,7 @@ pub fn launcher_dir() -> Result<PathBuf> {
         return Ok(sandbox_home.join("bin"));
     }
 
-    { Ok(home_dir()?.join(".local").join("bin")) }
+    Ok(home_dir()?.join(".local").join("bin"))
 }
 
 /// Path to the launcher binary (`~/.local/bin/jcode` by default).
