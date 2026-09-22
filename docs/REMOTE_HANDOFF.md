@@ -16,7 +16,8 @@ Three motivating stories:
    moves the session to `arch-linux-desktop` and the local TUI reattaches over SSH.
 2. **Desktop → laptop.** Walking away from the desk; the overnight run should keep
    executing on the desktop but I want to watch and steer from the laptop.
-3. **Any host → phone/web.** Same session, thin client, via the relay.
+3. **Any host → thin client.** Same session driven from another host over a network
+   transport.
 
 These are actually two distinct primitives that people conflate:
 
@@ -34,8 +35,6 @@ Most of the value is in attach. Migration is the hard, rarer one.
 | SSH ControlMaster profiles | `app-core/src/ssh_remote.rs` | Named hosts, verified background control socket, headless reuse. |
 | Unix socket protocol | `server/socket.rs`, `client_api.rs` | Line-delimited JSON `Request`/`ServerEvent`. Transport-agnostic in shape, not in code. |
 | Reload handoff | `server/reload.rs`, `restart_snapshot.rs` | Already serializes live server state across a process swap. This is migration, minus the network. |
-| Relay | `server/jade_relay.rs` | Long-poll bridge to a remote control plane; the phone/web path. |
-| Harness API | `jcode-harness-api{,-server}` | A second, more structured client surface. |
 
 The important observation: **reload already solves the state-transfer half of
 migration**, and **takeover already solves the ownership half of attach**. Remote
@@ -51,7 +50,8 @@ Today clients dial `socket_path()`. Introduce a `SessionTransport` with three im
 - `Ssh(profile)` — `ssh -S <control-socket> <target> jcode serve --stdio`, framed over
   stdin/stdout. Reuses the existing verified ControlMaster, so no new auth surface and
   no credential handling in jcode.
-- `Relay` — existing jade relay framing, for hosts that cannot be SSH'd into.
+- `Remote(network)` — a future framed transport for hosts that cannot be SSH'd into.
+  No such transport exists today: the jade relay and the phone/web client were cut.
 
 Everything above this layer keeps speaking the same `Request`/`ServerEvent` JSON. This
 is the single change that makes the rest cheap.
@@ -125,8 +125,8 @@ session record, is enough:
    be needed at the transport.
 3. Does the swarm coordinator span hosts? Natural extension (spawn workers on the beefy
    box), but it multiplies the ownership problem. Later.
-4. Trust boundary: SSH gives us authn/authz for free. The relay does not, and needs a
-   real story before it carries full session control.
+4. Trust boundary: SSH gives us authn/authz for free. Any non-SSH transport would not,
+   and needs a real story before it carries full session control.
 
 ## Suggested first slice
 

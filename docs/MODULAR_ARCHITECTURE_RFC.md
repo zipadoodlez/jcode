@@ -1,6 +1,11 @@
 # Modular Architecture RFC
 
-Status: Draft
+Status: Draft (pre-rewrite). The crate inventory below predates the rewrite, which
+folded `jcode-ambient-types`, `jcode-batch-types`, `jcode-auth-types`,
+`jcode-side-panel-types`, and `jcode-tool-types` into their consumers and cut
+`jcode-gateway-types`, `jcode-notify-email`, and `jcode-azure-auth`. The rewrite's
+target design lives in `notes/target-architecture.md`; the current crate survey in
+`reports/crate-map.md`. Treat this RFC as design history.
 
 This RFC describes a modular target architecture for jcode that matches the current codebase, preserves the existing product model, and gives us a safe migration path from today's mostly-monolithic root crate to a layered workspace.
 
@@ -68,16 +73,9 @@ The current code organization is mixed:
 - **Workspace crates** already isolate several heavy or stable seams.
 - **Subdirectories under `src/`** increasingly reflect domain boundaries, especially for `agent`, `cli`, `server`, `tool`, and `tui`.
 
-Current workspace members from `Cargo.toml` are grouped roughly as follows:
-
-- root package: `jcode`
-- foundation/runtime support: `jcode-agent-runtime`, `jcode-core`, `jcode-storage`, `jcode-terminal-launch`, `jcode-tool-core`
-- data-contract crates: `jcode-ambient-types`, `jcode-auth-types`, `jcode-background-types`, `jcode-batch-types`, `jcode-config-types`, `jcode-gateway-types`, `jcode-memory-types`, `jcode-message-types`, `jcode-selfdev-types`, `jcode-session-types`, `jcode-side-panel-types`, `jcode-task-types`, `jcode-tool-types`, `jcode-usage-types`
-- protocol and planning: `jcode-protocol`, `jcode-plan`
-- heavy or optional integrations: `jcode-embedding`, `jcode-pdf`, `jcode-notify-email`
-- auth and providers: `jcode-azure-auth`, `jcode-provider-core`, `jcode-provider-metadata`, `jcode-provider-openrouter`, `jcode-provider-gemini`
-- TUI extraction seams: `jcode-tui-core`, `jcode-tui-markdown`, `jcode-tui-mermaid`, `jcode-tui-render`, `jcode-tui-workspace`
-- product surfaces outside the main TUI binary: `jcode-desktop`
+The canonical workspace-member list is `Cargo.toml`; the current survey is
+`reports/crate-map.md`. The crate inventory that used to appear here was removed
+because the rewrite changed the set substantially.
 
 ### What the root crate still owns
 
@@ -102,29 +100,21 @@ These splits already exist and should be treated as real architectural footholds
 | Crate | Current role |
 |---|---|
 | `jcode-agent-runtime` | shared interrupt and lightweight runtime primitives for agent execution |
-| `jcode-ambient-types` | usage and rate-limit records shared by ambient/background flows |
-| `jcode-auth-types` | provider-neutral auth state and credential metadata |
 | `jcode-background-types` | background-task status and progress DTOs |
-| `jcode-batch-types` | batch tool progress DTOs, currently depending only on message types internally |
 | `jcode-config-types` | stable configuration data contracts |
 | `jcode-core` | low-level utilities such as IDs, env helpers, fs helpers, stdin detection, and formatting |
-| `jcode-gateway-types` | gateway-facing data contracts |
 | `jcode-memory-types` | memory subsystem data contracts |
 | `jcode-message-types` | message content and transport-adjacent data contracts |
 | `jcode-protocol` | client/server protocol surface built from stable type crates and provider-core values |
 | `jcode-plan` | plan/task graph data model shared across coordination flows |
 | `jcode-selfdev-types` | self-development request/status data contracts |
 | `jcode-session-types` | session DTOs, currently depending only on message types internally |
-| `jcode-side-panel-types` | side-panel page and update data contracts |
 | `jcode-task-types` | task/tool scheduling data contracts |
 | `jcode-tool-core` | runtime tool contracts such as the `Tool` trait and execution context |
-| `jcode-tool-types` | stable tool output/image DTOs |
 | `jcode-usage-types` | usage accounting data contracts |
 | `jcode-storage` | storage helpers layered on `jcode-core` |
 | `jcode-embedding` | ONNX/tokenizer-based embedding implementation and heavy inference deps |
 | `jcode-pdf` | PDF text extraction |
-| `jcode-azure-auth` | Azure bearer token retrieval |
-| `jcode-notify-email` | SMTP/IMAP/mail transport |
 | `jcode-provider-metadata` | provider/login catalog and profile metadata |
 | `jcode-provider-core` | shared provider contract (`Provider`/`EventStream`), value types, route/cost/model helpers, shared HTTP client, schema helpers |
 | `jcode-provider-openrouter` | OpenRouter-specific catalog/cache/support helpers |
@@ -173,8 +163,6 @@ flowchart TD
   J --> AR[jcode-agent-runtime]
   J --> Emb[jcode-embedding]
   J --> PDF[jcode-pdf]
-  J --> Azure[jcode-azure-auth]
-  J --> Mail[jcode-notify-email]
   J --> PMeta[jcode-provider-metadata]
   J --> PCore[jcode-provider-core]
   J --> POR[jcode-provider-openrouter]
@@ -244,8 +232,6 @@ flowchart TD
     AR[jcode-agent-runtime]
     Emb[jcode-embedding]
     PDF[jcode-pdf]
-    Azure[jcode-azure-auth]
-    Mail[jcode-notify-email]
     PMeta[jcode-provider-metadata]
     PCore[jcode-provider-core]
     POR[jcode-provider-openrouter]
@@ -312,7 +298,6 @@ These crates should be small, low-dependency, and slow-changing. They are allowe
 Existing examples:
 
 - `jcode-message-types`
-- `jcode-tool-types`
 - `jcode-session-types`
 - `jcode-config-types`
 - `jcode-protocol`
@@ -343,7 +328,7 @@ Target crates:
 - `jcode-session`: session model, state transitions, persistence-facing session operations.
 - `jcode-server`: daemon lifecycle, client attachment, swarm/background coordination, service registries.
 - `jcode-tools` or narrower `jcode-tool-core` plus `jcode-tool-impl`: tool registry contracts and tool implementations.
-- `jcode-auth`: root auth orchestration after provider-neutral data lives in `jcode-auth-types` and heavy leaf SDKs stay separate.
+- `jcode-auth`: root auth orchestration after provider-neutral data and heavy leaf SDKs are separated.
 - `jcode-memory`: memory graph/log/search orchestration once its contracts are stable enough.
 
 Compile-time reason:
@@ -375,8 +360,6 @@ Existing examples:
 
 - `jcode-embedding`
 - `jcode-pdf`
-- `jcode-azure-auth`
-- `jcode-notify-email`
 - `jcode-tui-mermaid`
 - provider support crates such as `jcode-provider-openrouter` and `jcode-provider-gemini`
 
@@ -421,7 +404,7 @@ jcode-agent
   -> jcode-provider, jcode-tools, jcode-session, jcode-agent-runtime
 
 jcode-provider
-  -> jcode-provider-core, jcode-provider-* leaves, jcode-auth-types
+  -> jcode-provider-core, jcode-provider-* leaves
 
 jcode-session
   -> jcode-session-types, jcode-message-types, jcode-storage, optional leaf adapters
@@ -471,7 +454,7 @@ Based on the current root size and existing footholds, the best next work is pro
 3. **TUI reducer/state core:** extract non-rendering app state transitions from `src/tui/app/*` before moving the whole TUI crate.
 4. **Tool contracts and registry shape:** separate tool definitions, schemas, execution context, and registry metadata from individual tool implementations.
 5. **Session domain:** isolate session state transitions and persistence-facing operations from server/TUI/provider orchestration.
-6. **Auth facade:** keep provider-neutral auth data in `jcode-auth-types`, heavy SDKs in leaf crates, and move root auth orchestration only after provider contracts stabilize.
+6. **Auth facade:** keep provider-neutral auth data and heavy leaf SDKs separate, and move root auth orchestration only after provider contracts stabilize.
 
 A useful near-term policy: every time a large root file is touched, ask whether some pure table, DTO, parser, reducer, classifier, or state transition can move downward into an existing support crate without pulling runtime dependencies with it.
 
