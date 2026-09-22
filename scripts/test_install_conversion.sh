@@ -9,9 +9,9 @@ mkdir -p "$tmp/bin" "$tmp/home" "$tmp/install"
 cat > "$tmp/bin/uname" <<'EOF'
 #!/usr/bin/env bash
 case "${1:-}" in
-  -s) printf '%s\n' "${TEST_UNAME_S:-Linux}" ;;
-  -m) printf '%s\n' "${TEST_UNAME_M:-x86_64}" ;;
-  *) printf '%s\n' "${TEST_UNAME_S:-Linux}" ;;
+  -s) printf '%s\n' Linux ;;
+  -m) printf '%s\n' x86_64 ;;
+  *) printf '%s\n' Linux ;;
 esac
 EOF
 
@@ -47,7 +47,7 @@ case "$url" in
     fi
     checksum='8d57abb57a0dae3ff23c8f0df1f51951b7772822e0d560e860d6f68c24ef6d3d'
     [ "${BAD_CHECKSUM:-0}" != "1" ] || checksum='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-    printf '%s  %s\n' "$checksum" "${TEST_CHECKSUM_ASSET:-jcode-linux-x86_64.tar.gz}"
+    printf '%s  %s\n' "$checksum" "jcode-linux-x86_64.tar.gz"
     ;;
   *github.com*/releases/download/v1.2.3/SHA256SUMS)
     checksum='8d57abb57a0dae3ff23c8f0df1f51951b7772822e0d560e860d6f68c24ef6d3d'
@@ -77,13 +77,10 @@ while [ "$#" -gt 0 ]; do
     *) shift ;;
   esac
 done
-artifact="${TEST_ARCHIVE_ARTIFACT:-jcode-linux-x86_64}"
+artifact="jcode-linux-x86_64"
 cat > "$dest/$artifact" <<'BIN'
 #!/usr/bin/env bash
 if [ "${1:-}" = "--version" ]; then printf 'jcode 1.2.3\n'; fi
-if [ "${1:-}" = "setup-hotkey" ] && [ -n "${HOTKEY_SETUP_LOG:-}" ]; then
-  printf '%s\n' "$*" >> "$HOTKEY_SETUP_LOG"
-fi
 BIN
 chmod +x "$dest/$artifact"
 EOF
@@ -91,7 +88,6 @@ chmod +x "$tmp/bin/uname" "$tmp/bin/curl" "$tmp/bin/tar"
 
 conversion_id="11111111-2222-4333-8444-555555555555"
 telemetry_log="$tmp/telemetry.jsonl"
-hotkey_setup_log="$tmp/hotkey-setup.log"
 PATH="$tmp/bin:$PATH" \
 HOME="$tmp/home" \
 JCODE_HOME="$tmp/home/.jcode" \
@@ -99,16 +95,15 @@ JCODE_INSTALL_DIR="$tmp/install" \
 JCODE_INSTALL_CONVERSION_ID="$conversion_id" \
 JCODE_SKIP_SERVER_RELOAD=1 \
 INSTALL_TELEMETRY_LOG="$telemetry_log" \
-HOTKEY_SETUP_LOG="$hotkey_setup_log" \
 bash "$repo_dir/scripts/install.sh" >/dev/null
 
 test "$(cat "$tmp/home/.jcode/install_conversion_id")" = "$conversion_id"
 grep -q '"stage":"installer_start".*"outcome":"success"' "$telemetry_log"
 grep -q '"stage":"installer_finish".*"outcome":"success"' "$telemetry_log"
-test "$(cat "$hotkey_setup_log")" = "setup-hotkey"
 
 # If GitHub's release page is blocked, the static jcode.sh version endpoint
 # must keep the complete install path working.
+url_log="$tmp/urls.log"
 PATH="$tmp/bin:$PATH" \
 HOME="$tmp/home-metadata-fallback" \
 JCODE_HOME="$tmp/home-metadata-fallback/.jcode" \
@@ -116,6 +111,7 @@ JCODE_INSTALL_DIR="$tmp/install-metadata-fallback" \
 JCODE_SKIP_SERVER_RELOAD=1 \
 JCODE_NO_TELEMETRY=1 \
 FAIL_GITHUB_RELEASE=1 \
+DOWNLOAD_URL_LOG="$url_log" \
 bash "$repo_dir/scripts/install.sh" >/dev/null
 test -x "$tmp/install-metadata-fallback/jcode"
 
@@ -130,27 +126,6 @@ JCODE_NO_TELEMETRY=1 \
 METADATA_CHECKSUM_HTML=1 \
 bash "$repo_dir/scripts/install.sh" >/dev/null
 test -x "$tmp/install-checksum-fallback/jcode"
-
-# Git for Windows can be x64-emulated on Windows ARM64. In that case uname -m
-# reports x86_64 while PROCESSOR_ARCHITEW6432 exposes the native ARM64 OS.
-windows_url_log="$tmp/windows-arm64-urls.log"
-PATH="$tmp/bin:$PATH" \
-HOME="$tmp/home-windows-arm64" \
-LOCALAPPDATA="$tmp/localappdata-windows-arm64" \
-JCODE_HOME="$tmp/home-windows-arm64/.jcode" \
-JCODE_INSTALL_DIR="$tmp/install-windows-arm64" \
-JCODE_SKIP_SERVER_RELOAD=1 \
-JCODE_NO_TELEMETRY=1 \
-TEST_UNAME_S=MINGW64_NT-10.0 \
-TEST_UNAME_M=x86_64 \
-PROCESSOR_ARCHITECTURE=AMD64 \
-PROCESSOR_ARCHITEW6432=ARM64 \
-TEST_ARCHIVE_ARTIFACT=jcode-windows-aarch64.exe \
-TEST_CHECKSUM_ASSET=jcode-windows-aarch64.tar.gz \
-DOWNLOAD_URL_LOG="$windows_url_log" \
-bash "$repo_dir/scripts/install.sh" >/dev/null
-grep -q '/jcode-windows-aarch64.tar.gz$' "$windows_url_log"
-test -x "$tmp/install-windows-arm64/jcode.exe"
 
 failure_log="$tmp/failure.jsonl"
 if PATH="$tmp/bin:$PATH" \
@@ -182,7 +157,7 @@ if PATH="$tmp/bin:$PATH" \
 fi
 grep -q '"stage":"installer_finish".*"outcome":"failure".*"failure_stage":"artifact_verification"' "$checksum_failure_log"
 
-if grep -q 'api.github.com' "$windows_url_log"; then
+if grep -q 'api.github.com' "$url_log"; then
   echo "installer must not depend on the rate-limited unauthenticated GitHub API" >&2
   exit 1
 fi

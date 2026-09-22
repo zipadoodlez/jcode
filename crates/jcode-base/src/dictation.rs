@@ -352,14 +352,6 @@ fn parse_ppid(status: &str) -> Option<u32> {
 }
 
 fn shell_command(command: &str) -> tokio::process::Command {
-    #[cfg(windows)]
-    {
-        let mut cmd = tokio::process::Command::new("cmd");
-        cmd.arg("/C").arg(command);
-        cmd
-    }
-
-    #[cfg(not(windows))]
     {
         let mut cmd = tokio::process::Command::new("sh");
         cmd.arg("-lc").arg(command);

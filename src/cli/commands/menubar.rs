@@ -422,7 +422,20 @@ mod macos {
     /// (osascript / `open`) never blocks the menu bar UI.
     fn launch_jcode_window(args: Vec<String>) {
         std::thread::spawn(move || {
-            if let Err(err) = crate::setup_hints::launch_jcode_in_macos_terminal(&args) {
+            let mut spawn_args = vec!["--fresh-spawn".to_string()];
+            spawn_args.extend(args.iter().cloned());
+            let exe = crate::build::client_update_candidate(
+                jcode_selfdev_types::client_selfdev_requested(),
+            )
+            .map(|(path, _label)| path)
+            .unwrap_or_else(|| std::path::PathBuf::from("jcode"));
+            let command = crate::terminal_launch::TerminalCommand::new(exe, spawn_args)
+                .title("jcode".to_string())
+                .kind("menubar")
+                .fresh_spawn();
+            let cwd = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+            if let Err(err) = crate::terminal_launch::spawn_command_in_new_terminal(&command, &cwd)
+            {
                 crate::logging::warn(&format!(
                     "menubar: failed to launch jcode window ({args:?}): {err}"
                 ));

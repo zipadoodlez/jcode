@@ -66,11 +66,7 @@ pub fn binary_stem() -> &'static str {
 }
 
 pub fn binary_name() -> &'static str {
-    if cfg!(windows) {
-        "jcode.exe"
-    } else {
-        binary_stem()
-    }
+    binary_stem()
 }
 
 pub const SELFDEV_CARGO_PROFILE: &str = "selfdev";
@@ -171,13 +167,12 @@ pub fn selfdev_build_command_for_target(
     repo_dir: &Path,
     target: SelfDevBuildTarget,
 ) -> SelfDevBuildCommand {
-    selfdev_build_command_for_target_on_platform(repo_dir, target, cfg!(windows))
+    selfdev_build_command_for_target_on_platform(repo_dir, target)
 }
 
 fn selfdev_build_command_for_target_on_platform(
     repo_dir: &Path,
     target: SelfDevBuildTarget,
-    is_windows: bool,
 ) -> SelfDevBuildCommand {
     let target = match target {
         SelfDevBuildTarget::Auto => infer_selfdev_build_target(repo_dir),
@@ -188,10 +183,7 @@ fn selfdev_build_command_for_target_on_platform(
         SelfDevBuildTarget::All | SelfDevBuildTarget::Auto => vec![("jcode", "jcode")],
     };
     let wrapper = repo_dir.join("scripts").join("dev_cargo.sh");
-    // `bash` on Windows may resolve to WSL, which cannot use the native Rust
-    // toolchain or produce the Windows executable we publish. Avoid both that
-    // ambiguity and native-vs-POSIX path translation by invoking Cargo directly.
-    if wrapper.is_file() && !is_windows {
+    if wrapper.is_file() {
         let script = wrapper.to_string_lossy();
         let command = specs
             .iter()
@@ -215,36 +207,12 @@ fn selfdev_build_command_for_target_on_platform(
     }
 
     let command = display_build_command("cargo", &specs);
-    if is_windows {
-        return SelfDevBuildCommand {
-            program: "cargo".to_string(),
-            args: cargo_build_args(&specs),
-            display: command,
-        };
-    }
 
     SelfDevBuildCommand {
         program: "bash".to_string(),
         args: vec!["-lc".to_string(), command.clone()],
         display: command,
     }
-}
-
-fn cargo_build_args(specs: &[(&str, &str)]) -> Vec<String> {
-    let mut args = vec![
-        "build".to_string(),
-        "--profile".to_string(),
-        SELFDEV_CARGO_PROFILE.to_string(),
-    ];
-    for (package, binary) in specs {
-        args.extend([
-            "-p".to_string(),
-            (*package).to_string(),
-            "--bin".to_string(),
-            (*binary).to_string(),
-        ]);
-    }
-    args
 }
 
 fn display_build_command(program: &str, specs: &[(&str, &str)]) -> String {
@@ -371,21 +339,7 @@ pub fn launcher_dir() -> Result<PathBuf> {
         return Ok(sandbox_home.join("bin"));
     }
 
-    #[cfg(windows)]
-    {
-        if let Ok(local) = std::env::var("LOCALAPPDATA") {
-            return Ok(PathBuf::from(local).join("jcode").join("bin"));
-        }
-        Ok(home_dir()?
-            .join("AppData")
-            .join("Local")
-            .join("jcode")
-            .join("bin"))
-    }
-    #[cfg(not(windows))]
-    {
-        Ok(home_dir()?.join(".local").join("bin"))
-    }
+    { Ok(home_dir()?.join(".local").join("bin")) }
 }
 
 /// Path to the launcher binary (`~/.local/bin/jcode` by default).
@@ -673,49 +627,14 @@ mod tests {
     }
 
     #[test]
-    fn windows_selfdev_build_invokes_native_cargo_without_a_shell() {
-        let repo = repo_fixture(false);
-        let scripts = repo.path().join("scripts");
-        std::fs::create_dir_all(&scripts).expect("scripts dir");
-        std::fs::write(scripts.join("dev_cargo.sh"), "#!/usr/bin/env bash\n").expect("wrapper");
-
-        let command = selfdev_build_command_for_target_on_platform(
-            repo.path(),
-            SelfDevBuildTarget::Tui,
-            true,
-        );
-
-        assert_eq!(command.program, "cargo");
-        assert_eq!(
-            command.args,
-            [
-                "build",
-                "--profile",
-                "selfdev",
-                "-p",
-                "jcode",
-                "--bin",
-                "jcode"
-            ]
-        );
-        assert!(
-            !command.args.iter().any(|arg| arg.contains("dev_cargo.sh")),
-            "Windows must not pass a native script path through bash"
-        );
-    }
-
-    #[test]
     fn unix_selfdev_build_keeps_using_the_wrapper() {
         let repo = repo_fixture(false);
         let scripts = repo.path().join("scripts");
         std::fs::create_dir_all(&scripts).expect("scripts dir");
         std::fs::write(scripts.join("dev_cargo.sh"), "#!/usr/bin/env bash\n").expect("wrapper");
 
-        let command = selfdev_build_command_for_target_on_platform(
-            repo.path(),
-            SelfDevBuildTarget::Tui,
-            false,
-        );
+        let command =
+            selfdev_build_command_for_target_on_platform(repo.path(), SelfDevBuildTarget::Tui);
 
         assert_eq!(command.program, "bash");
         assert_eq!(command.args.first().map(String::as_str), Some("-lc"));
@@ -724,29 +643,6 @@ mod tests {
                 .args
                 .last()
                 .is_some_and(|arg| arg.contains("scripts/dev_cargo.sh"))
-        );
-    }
-
-    #[test]
-    fn windows_cargo_args_build_the_tui_for_all() {
-        let repo = repo_fixture(false);
-        let command = selfdev_build_command_for_target_on_platform(
-            repo.path(),
-            SelfDevBuildTarget::All,
-            true,
-        );
-
-        assert_eq!(
-            command.args,
-            [
-                "build",
-                "--profile",
-                "selfdev",
-                "-p",
-                "jcode",
-                "--bin",
-                "jcode",
-            ]
         );
     }
 
@@ -840,10 +736,7 @@ mod tests {
         let channel_dir = temp.path().join("channel");
         std::fs::create_dir_all(&channel_dir).expect("channel dir");
         let link = channel_dir.join("jcode");
-        #[cfg(unix)]
         std::os::unix::fs::symlink(&wrapper, &link).expect("symlink");
-        #[cfg(not(unix))]
-        std::fs::copy(&wrapper, &link).map(|_| ()).expect("copy");
         assert_eq!(
             resolve_binary_payload(&link),
             std::fs::canonicalize(&payload).expect("canonical payload")

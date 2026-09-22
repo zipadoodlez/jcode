@@ -280,11 +280,7 @@ fn test_launcher_dir_ignores_blank_overrides_and_uses_home_default() {
 }
 
 fn default_launcher_dir(home: &Path) -> PathBuf {
-    if cfg!(windows) {
-        home.join("AppData").join("Local").join("jcode").join("bin")
-    } else {
-        home.join(".local").join("bin")
-    }
+    home.join(".local").join("bin")
 }
 
 #[test]

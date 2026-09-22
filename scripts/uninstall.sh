@@ -37,22 +37,11 @@ for arg in "$@"; do
 done
 
 OS="$(uname -s)"
-case "$OS" in
-  MINGW*|MSYS*|CYGWIN*)
-    JCODE_HOME="${LOCALAPPDATA:?LOCALAPPDATA not set}/jcode"
-    LAUNCHER_DIR="${JCODE_INSTALL_DIR:-$LOCALAPPDATA/jcode/bin}"
-    LAUNCHER="$LAUNCHER_DIR/jcode.exe"
-    BUILDS_DIR="$JCODE_HOME/builds"
-    USER_DATA_DIR="$JCODE_HOME"
-    ;;
-  *)
-    JCODE_HOME="$HOME/.jcode"
-    LAUNCHER_DIR="${JCODE_INSTALL_DIR:-$HOME/.local/bin}"
-    LAUNCHER="$LAUNCHER_DIR/jcode"
-    BUILDS_DIR="$JCODE_HOME/builds"
-    USER_DATA_DIR="$JCODE_HOME"
-    ;;
-esac
+JCODE_HOME="$HOME/.jcode"
+LAUNCHER_DIR="${JCODE_INSTALL_DIR:-$HOME/.local/bin}"
+LAUNCHER="$LAUNCHER_DIR/jcode"
+BUILDS_DIR="$JCODE_HOME/builds"
+USER_DATA_DIR="$JCODE_HOME"
 
 # Collect removal targets.
 TARGETS=()
@@ -131,37 +120,6 @@ fi
 if [ -f "$SELFDEV_WRAPPER" ] && grep -q "jcode" "$SELFDEV_WRAPPER" 2>/dev/null; then
   remove "$SELFDEV_WRAPPER"
 fi
-
-# On Windows (Git Bash), also remove the launcher dir from the persisted user
-# PATH, mirroring what install.sh added. Case- and trailing-slash-insensitive,
-# best-effort: a PATH cleanup failure must not fail the uninstall.
-case "$OS" in
-  MINGW*|MSYS*|CYGWIN*)
-    if command -v powershell.exe >/dev/null 2>&1; then
-      win_launcher_dir=$(cygpath -w "$LAUNCHER_DIR" 2>/dev/null || echo "$LAUNCHER_DIR")
-      _win_path_key() { printf '%s' "$1" | sed 's|[\\/]*$||' | tr '[:upper:]' '[:lower:]'; }
-      current_user_path=$(powershell.exe -NoProfile -NonInteractive -Command \
-        "[Environment]::GetEnvironmentVariable('Path','User')" 2>/dev/null | tr -d '\r' || true)
-      target_key=$(_win_path_key "$win_launcher_dir")
-      new_user_path=""
-      set -f
-      IFS=';'
-      for entry in $current_user_path; do
-        [ -n "$entry" ] || continue
-        [ "$(_win_path_key "$entry")" = "$target_key" ] && continue
-        if [ -z "$new_user_path" ]; then new_user_path="$entry"; else new_user_path="$new_user_path;$entry"; fi
-      done
-      unset IFS
-      set +f
-      if [ "$new_user_path" != "$current_user_path" ]; then
-        if JCODE_NEW_USER_PATH="$new_user_path" powershell.exe -NoProfile -NonInteractive -Command \
-          '[Environment]::SetEnvironmentVariable("Path", $env:JCODE_NEW_USER_PATH, "User")' >/dev/null 2>&1; then
-          info "Removed $win_launcher_dir from your user PATH."
-        fi
-      fi
-    fi
-    ;;
-esac
 
 info "jcode uninstalled."
 if [ "$PURGE" = false ]; then
