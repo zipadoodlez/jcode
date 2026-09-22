@@ -117,7 +117,6 @@ fn screenshot_uses_private_script_with_fresh_build_and_target_output() {
     }
 }
 
-#[cfg(unix)]
 #[test]
 fn screenshot_rejects_symlink_destination() {
     let root = checkout();

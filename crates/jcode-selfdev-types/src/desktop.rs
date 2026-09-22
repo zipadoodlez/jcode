@@ -72,7 +72,6 @@ mod tests {
         assert_eq!(desktop_repo_root(root.path()), None);
     }
 
-    #[cfg(unix)]
     #[test]
     fn resolves_checkout_and_nested_directory_symlinks() {
         let root = checkout();

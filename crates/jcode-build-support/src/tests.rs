@@ -114,7 +114,6 @@ fn test_dev_binary_source_metadata_mismatch_rejects_publish_candidate() {
     assert!(error.to_string().contains("999999999999aaaa"));
 }
 
-#[cfg(unix)]
 #[test]
 fn test_smoke_test_server_protocol_uses_fresh_connection_after_ping() {
     use std::io::{BufRead, BufReader, Write};

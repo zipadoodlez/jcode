@@ -992,7 +992,6 @@ mod tests {
         assert_eq!(cached_render_failure(key), None);
     }
 
-    #[cfg(unix)]
     #[test]
     fn a_failing_snippet_spawns_the_toolchain_only_once_across_many_redraws() {
         // #563: the real symptom was a chain of latex/pdflatex processes, one per
@@ -1117,7 +1116,6 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[cfg(unix)]
     #[test]
     fn toolchain_output_is_validated_cached_and_reused() {
         use image::{ImageBuffer, Rgba};
@@ -1173,7 +1171,6 @@ mod tests {
         assert_eq!(cached.path, artifact.path);
     }
 
-    #[cfg(unix)]
     #[test]
     fn pdf_fallback_crops_recolors_and_produces_a_cached_png() {
         use image::{ImageBuffer, Rgba};

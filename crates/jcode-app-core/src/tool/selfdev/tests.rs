@@ -181,7 +181,6 @@ fn optimized_test_shell_command_routes_compile_subcommands_only() {
     assert!(shell.ends_with("cargo test -p jcode-base && cargo fmt --all -- --check"));
 }
 
-#[cfg(unix)]
 #[test]
 fn optimized_test_shell_command_executes_raw_cargo_test_through_wrapper() {
     use std::os::unix::fs::PermissionsExt;

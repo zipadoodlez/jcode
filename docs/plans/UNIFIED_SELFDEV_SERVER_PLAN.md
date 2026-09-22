@@ -163,11 +163,11 @@ There are multiple `JCODE_SELFDEV_MODE` checks across startup, hot reload, and s
 - `src/cli/dispatch.rs`
 - `src/cli/selfdev.rs`
 - `src/cli/hot_exec.rs`
-- `src/server.rs`
-- `src/server/reload.rs`
-- `src/server/client_session.rs`
-- `src/tui/mod.rs`
-- `src/tui/backend.rs`
+- `crates/jcode-app-core/src/server.rs`
+- `crates/jcode-app-core/src/server/reload.rs`
+- `crates/jcode-app-core/src/server/client_session.rs`
+- `crates/jcode-tui/src/tui/mod.rs`
+- `crates/jcode-tui/src/tui/backend.rs`
 - `docs/SERVER_ARCHITECTURE.md`
 - debug/test scripts that assume separate self-dev sockets
 

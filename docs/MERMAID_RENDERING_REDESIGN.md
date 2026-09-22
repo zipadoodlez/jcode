@@ -147,7 +147,7 @@ Recommended crate modules:
 - `registry.rs`: active/streaming diagram state, ideally app-owned.
 - `placement.rs`: placeholder/image-region planning.
 - `presenter.rs`: ratatui-image/Kitty/Sixel/iTerm viewport rendering.
-- `debug.rs`: stats collected from explicit events.
+- `crates/jcode-tui-mermaid/src/debug.rs`: stats collected from explicit events.
 
 ## Migration plan
 

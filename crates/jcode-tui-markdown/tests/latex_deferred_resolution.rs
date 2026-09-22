@@ -5,7 +5,7 @@
 //! environment variables, and the background render worker reads them
 //! asynchronously. Sharing a process would let that stub leak into this test.
 
-#![cfg(all(unix, feature = "mermaid-renderer"))]
+#![cfg(feature = "mermaid-renderer")]
 
 use std::time::{Duration, Instant};
 

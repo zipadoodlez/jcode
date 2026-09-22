@@ -3,7 +3,6 @@ use std::path::Path;
 /// Set file permissions to owner read/write/execute (0o755).
 /// No-op on Windows (executability is determined by file extension).
 pub fn set_permissions_executable(path: &Path) -> std::io::Result<()> {
-    #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         let perms = std::fs::Permissions::from_mode(0o755);
@@ -18,7 +17,6 @@ pub fn set_permissions_executable(path: &Path) -> std::io::Result<()> {
 /// staged file into place. This avoids the lock on a running executable but is
 /// not fully atomic.
 pub fn atomic_symlink_swap(src: &Path, dst: &Path, temp: &Path) -> std::io::Result<()> {
-    #[cfg(unix)]
     {
         let _ = std::fs::remove_file(temp);
         std::os::unix::fs::symlink(src, temp)?;

@@ -420,7 +420,6 @@ async fn bounded_output(mut reader: impl AsyncRead + Unpin) -> Result<String> {
 struct ProcessGroup(u32);
 impl Drop for ProcessGroup {
     fn drop(&mut self) {
-        #[cfg(unix)]
         unsafe {
             libc::kill(-(self.0 as i32), libc::SIGKILL);
         }
@@ -436,7 +435,6 @@ async fn run_command(root: &Path, spec: CommandSpec, timeout: u64) -> Result<Too
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
-    #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
         command.as_std_mut().process_group(0);

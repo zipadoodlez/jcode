@@ -14,12 +14,12 @@
 //! thread. Without the deferred worker it blocks for the per-command timeout
 //! (8s) on every uncached formula.
 
-#![cfg(all(unix, feature = "mermaid-renderer"))]
+#![cfg(feature = "mermaid-renderer")]
 
 use std::io::Write;
 use std::time::{Duration, Instant};
 
-#[cfg(all(unix, feature = "mermaid-renderer"))]
+#[cfg(feature = "mermaid-renderer")]
 fn hanging_stub(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
     use std::os::unix::fs::PermissionsExt;
     let path = dir.join(name);
@@ -32,7 +32,7 @@ fn hanging_stub(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
     path
 }
 
-#[cfg(all(unix, feature = "mermaid-renderer"))]
+#[cfg(feature = "mermaid-renderer")]
 #[test]
 fn a_hanging_tex_toolchain_never_blocks_the_markdown_draw_path() {
     let dir = tempfile::tempdir().unwrap();
