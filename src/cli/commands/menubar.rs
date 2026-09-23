@@ -424,8 +424,7 @@ mod macos {
         std::thread::spawn(move || {
             let mut spawn_args = vec!["--fresh-spawn".to_string()];
             spawn_args.extend(args.iter().cloned());
-            let exe = std::env::current_exe()
-                .unwrap_or_else(|_| std::path::PathBuf::from("jcode"));
+            let exe = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("jcode"));
             let command = crate::terminal_launch::TerminalCommand::new(exe, spawn_args)
                 .title("jcode".to_string())
                 .kind("menubar")
